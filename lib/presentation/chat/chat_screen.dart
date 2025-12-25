@@ -49,9 +49,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     if (bottomInset > 0) {
       // Keyboard opened
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _scrollToBottom();
-      });
+      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
     }
   }
 
@@ -135,7 +133,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
                     return msg.isSender
                         ? _SenderBubble(message: msg.text, time: 'Now')
-                        : _ReceiverBubble(message: msg.text, time: 'Now');
+                        : _ReceiverBubble(
+                            message: msg.text,
+                            time: 'Now',
+                            receiverInitial: widget.userName[0],
+                          );
                   },
                 ),
               ),
@@ -152,8 +154,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 class _ReceiverBubble extends StatelessWidget {
   final String message;
   final String time;
+  final String receiverInitial;
 
-  const _ReceiverBubble({required this.message, required this.time});
+  const _ReceiverBubble({
+    required this.message,
+    required this.time,
+    required this.receiverInitial,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -162,12 +169,12 @@ class _ReceiverBubble extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 14,
             backgroundColor: Colors.blue,
             child: Text(
-              'A',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+              receiverInitial,
+              style: const TextStyle(fontSize: 12, color: Colors.white),
             ),
           ),
           const SizedBox(width: 8),
