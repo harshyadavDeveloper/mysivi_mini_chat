@@ -12,108 +12,138 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
+  late ChatController _chatController;
+
+  int _lastMessageCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _chatController.initChat(widget.userName);
+      _scrollToBottom();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _chatController = context.read<ChatController>();
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// ✅ Keyboard open / close listener
+  @override
+  void didChangeMetrics() {
+    final bottomInset = WidgetsBinding.instance.window.viewInsets.bottom;
+
+    if (bottomInset > 0) {
+      // Keyboard opened
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollToBottom();
+      });
+    }
   }
 
   void _scrollToBottom() {
     if (!_scrollController.hasClients) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final chatController = context.watch<ChatController>();
+    return Consumer<ChatController>(
+      builder: (context, chatController, _) {
+        /// ✅ Scroll ONLY when message count changes
+        if (chatController.messages.length != _lastMessageCount) {
+          _lastMessageCount = chatController.messages.length;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToBottom();
+          });
+        }
 
-    /// 👇 Initialize per-user chat
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      chatController.initChat(widget.userName);
-      _scrollToBottom();
-    });
+        return Scaffold(
+          backgroundColor: Colors.white,
+          resizeToAvoidBottomInset: true,
 
-    /// 👇 Auto-scroll when messages change
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-
-      /// ---------- APP BAR ----------
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.blue,
-              child: Text(
-                widget.userName[0],
-                style: const TextStyle(color: Colors.white),
-              ),
+          /// ---------- APP BAR ----------
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.white,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            title: Row(
               children: [
-                Text(
-                  widget.userName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.blue,
+                  child: Text(
+                    widget.userName[0],
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Online',
-                  style: TextStyle(fontSize: 12, color: Colors.green),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.userName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Online',
+                      style: TextStyle(fontSize: 12, color: Colors.green),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-
-      /// ---------- BODY ----------
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: chatController.messages.length,
-              itemBuilder: (_, index) {
-                final msg = chatController.messages[index];
-
-                return msg.isSender
-                    ? _SenderBubble(message: msg.text, time: 'Now')
-                    : _ReceiverBubble(message: msg.text, time: 'Now');
-              },
-            ),
           ),
 
-          /// ---------- INPUT ----------
-          const _MessageInput(),
-        ],
-      ),
+          /// ---------- BODY ----------
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: chatController.messages.length,
+                  itemBuilder: (_, index) {
+                    final msg = chatController.messages[index];
+
+                    return msg.isSender
+                        ? _SenderBubble(message: msg.text, time: 'Now')
+                        : _ReceiverBubble(message: msg.text, time: 'Now');
+                  },
+                ),
+              ),
+              const _MessageInput(),
+            ],
+          ),
+        );
+      },
     );
   }
 }
