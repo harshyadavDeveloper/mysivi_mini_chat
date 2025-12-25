@@ -1,17 +1,51 @@
 import 'package:chat_app/controllers/chat_controller.dart';
+import 'package:chat_app/core/widgets/word_meaning_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   final String userName;
 
   const ChatScreen({super.key, required this.userName});
 
   @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final chatController = context.watch<ChatController>();
+
+    /// 👇 Initialize per-user chat
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      chatController.initChat(userName);
+      chatController.initChat(widget.userName);
+      _scrollToBottom();
+    });
+
+    /// 👇 Auto-scroll when messages change
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
     });
 
     return Scaffold(
@@ -31,7 +65,7 @@ class ChatScreen extends StatelessWidget {
               radius: 18,
               backgroundColor: Colors.blue,
               child: Text(
-                userName[0],
+                widget.userName[0],
                 style: const TextStyle(color: Colors.white),
               ),
             ),
@@ -40,7 +74,7 @@ class ChatScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userName,
+                  widget.userName,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -63,6 +97,7 @@ class ChatScreen extends StatelessWidget {
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
               itemCount: chatController.messages.length,
               itemBuilder: (_, index) {
@@ -116,7 +151,19 @@ class _ReceiverBubble extends StatelessWidget {
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(message, style: const TextStyle(fontSize: 14)),
+                child: Wrap(
+                  children: message.split(' ').map((word) {
+                    return GestureDetector(
+                      onLongPress: () {
+                        showWordMeaningSheet(context, word);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(word, style: const TextStyle(fontSize: 14)),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -156,9 +203,18 @@ class _SenderBubble extends StatelessWidget {
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(
-                  message,
-                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                child: Wrap(
+                  children: message.split(' ').map((word) {
+                    return GestureDetector(
+                      onLongPress: () {
+                        showWordMeaningSheet(context, word);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(word, style: const TextStyle(fontSize: 14)),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
               const SizedBox(height: 4),
