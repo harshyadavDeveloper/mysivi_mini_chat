@@ -10,6 +10,9 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chatController = context.watch<ChatController>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      chatController.initChat(userName);
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
