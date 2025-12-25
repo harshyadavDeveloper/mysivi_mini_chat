@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:chat_app/presentation/chat/chat_screen.dart';
 import 'package:chat_app/presentation/offers/offers_screen.dart';
 import 'package:chat_app/presentation/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -221,47 +224,116 @@ class _UsersList extends StatelessWidget {
 }
 
 /// ================= CHAT HISTORY =================
-class _ChatHistoryList extends StatelessWidget {
+class _ChatHistoryList extends StatefulWidget {
   const _ChatHistoryList();
 
   @override
+  State<_ChatHistoryList> createState() => _ChatHistoryListState();
+}
+
+class _ChatHistoryListState extends State<_ChatHistoryList> {
+  final List<_ChatHistoryItem> _history = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChatHistory();
+  }
+
+  Future<void> _loadChatHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+
+    _history.clear();
+
+    for (final key in keys) {
+      if (!key.startsWith('chat_messages_')) continue;
+
+      final jsonString = prefs.getString(key);
+      if (jsonString == null) continue;
+
+      final List decoded = jsonDecode(jsonString);
+      if (decoded.isEmpty) continue;
+
+      final last = decoded.last;
+
+      final userName = key
+          .replaceFirst('chat_messages_', '')
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map(
+            (e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '',
+          )
+          .join(' ');
+
+      _history.add(
+        _ChatHistoryItem(
+          userName: userName,
+          lastMessage: last['text'],
+          time: DateTime.parse(last['time']),
+        ),
+      );
+    }
+
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final chats = [
-      "See you tomorrow!",
-      "Thanks for the help",
-      "Let's catch up soon",
-      "Got it, thanks!",
-      "Perfect, see you then",
-      "That sounds great",
-      "I'll check it out",
-      "Talk later",
-    ];
+    if (_history.isEmpty) {
+      return const Center(
+        child: Text('No chats yet', style: TextStyle(color: Colors.grey)),
+      );
+    }
 
     return ListView.builder(
-      key: const PageStorageKey("chat_history_list"),
-      itemCount: chats.length,
+      key: const PageStorageKey('chat_history_list'),
+      itemCount: _history.length,
       itemBuilder: (_, index) {
+        final item = _history[index];
+
         return ListTile(
           leading: CircleAvatar(
             radius: 22,
             backgroundColor: Colors.green,
             child: Text(
-              String.fromCharCode(65 + index),
+              item.userName[0],
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          title: Text("User ${index + 1}"),
+          title: Text(item.userName),
           subtitle: Text(
-            chats[index],
+            item.lastMessage,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           trailing: Text(
-            index == 0 ? "2 min ago" : "Yesterday",
+            _formatTime(item.time),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         );
       },
     );
   }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    if (now.difference(time).inDays == 0) {
+      return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+    }
+    return '${time.day}/${time.month}/${time.year}';
+  }
+}
+
+/// 🔒 Internal helper model
+class _ChatHistoryItem {
+  final String userName;
+  final String lastMessage;
+  final DateTime time;
+
+  _ChatHistoryItem({
+    required this.userName,
+    required this.lastMessage,
+    required this.time,
+  });
 }
