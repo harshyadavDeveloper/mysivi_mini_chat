@@ -55,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
               index: _selectedTopTab,
               children: [
                 _UsersList(users: _users),
-                const _ChatHistoryList(),
+                _ChatHistoryList(refreshTrigger: _selectedTopTab),
               ],
             ),
           ),
@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('User added: $newUser'),
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
       ),
     );
   }
@@ -224,7 +224,9 @@ class _UsersList extends StatelessWidget {
 
 /// ================= CHAT HISTORY =================
 class _ChatHistoryList extends StatefulWidget {
-  const _ChatHistoryList();
+  final int refreshTrigger;
+
+  const _ChatHistoryList({required this.refreshTrigger});
 
   @override
   State<_ChatHistoryList> createState() => _ChatHistoryListState();
@@ -237,6 +239,17 @@ class _ChatHistoryListState extends State<_ChatHistoryList> {
   void initState() {
     super.initState();
     _loadChatHistory();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ChatHistoryList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    /// 👇 Reload when switching to Chat History tab
+    if (widget.refreshTrigger == 1 &&
+        oldWidget.refreshTrigger != widget.refreshTrigger) {
+      _loadChatHistory();
+    }
   }
 
   Future<void> _loadChatHistory() async {
@@ -324,7 +337,6 @@ class _ChatHistoryListState extends State<_ChatHistoryList> {
   }
 }
 
-/// 🔒 Internal helper model
 class _ChatHistoryItem {
   final String userName;
   final String lastMessage;
