@@ -17,7 +17,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedTopTab = 0;
   int _bottomIndex = 0;
 
-  /// 👇 Users list now lives here
   final List<String> _users = [
     "Alice Johnson",
     "Bob Smith",
