@@ -1,4 +1,6 @@
+import 'package:chat_app/controllers/chat_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ChatScreen extends StatelessWidget {
   final String userName;
@@ -7,6 +9,8 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chatController = context.watch<ChatController>();
+
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -55,36 +59,16 @@ class ChatScreen extends StatelessWidget {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: const [
-                _ReceiverBubble(
-                  message: "Hey! How are you doing?",
-                  time: "10:30 AM",
-                ),
-                _SenderBubble(
-                  message: "I'm doing great, thanks! How about you?",
-                  time: "10:31 AM",
-                ),
-                _ReceiverBubble(
-                  message:
-                      "Pretty good! Just wanted to check in about the project.",
-                  time: "10:32 AM",
-                ),
-                _SenderBubble(
-                  message: "Oh yes, I've been making good progress on it.",
-                  time: "10:33 AM",
-                ),
-                _SenderBubble(
-                  message: "Should be ready by tomorrow.",
-                  time: "10:33 AM",
-                ),
-                _ReceiverBubble(
-                  message: "That's awesome! Let me know if you need any help.",
-                  time: "10:34 AM",
-                ),
-                _SenderBubble(message: "Will do, thanks!", time: "10:35 AM"),
-              ],
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: chatController.messages.length,
+              itemBuilder: (_, index) {
+                final msg = chatController.messages[index];
+
+                return msg.isSender
+                    ? _SenderBubble(message: msg.text, time: "Now")
+                    : _ReceiverBubble(message: msg.text, time: "Now");
+              },
             ),
           ),
 
