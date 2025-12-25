@@ -323,6 +323,14 @@ class _ChatHistoryListState extends State<_ChatHistoryList> {
             _formatTime(item.time),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(userName: item.userName),
+              ),
+            );
+          },
         );
       },
     );
