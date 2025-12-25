@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../core/constants/app_urls.dart';
+import 'package:chat_app/core/constants/app_urls.dart';
 
 class ChatApiService {
   int _currentIndex = 0;

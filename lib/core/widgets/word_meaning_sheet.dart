@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/services/dictionary_api_service.dart';
+import 'package:chat_app/data/services/dictionary_api_service.dart';
 
 void showWordMeaningSheet(BuildContext context, String word) {
   final api = DictionaryApiService();

@@ -18,17 +18,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _bottomIndex = 0;
 
   final List<String> _users = [
-    "Alice Johnson",
-    "Bob Smith",
-    "Carol Williams",
-    "David Brown",
-    "Emma Davis",
-    "Frank Miller",
-    "Grace Wilson",
-    "Henry Moore",
-    "Harsh Patel",
-    "Isha Gupta",
-    "Jatin Shah",
+    'Alice Johnson',
+    'Bob Smith',
+    'Carol Williams',
+    'David Brown',
+    'Emma Davis',
+    'Frank Miller',
+    'Grace Wilson',
+    'Henry Moore',
+    'Harsh Patel',
+    'Isha Gupta',
+    'Jatin Shah',
   ];
 
   int _mockUserCount = 1;
@@ -154,8 +154,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Row(
               children: [
-                _switcherItem("Users", 0),
-                _switcherItem("Chat History", 1),
+                _switcherItem('Users', 0),
+                _switcherItem('Chat History', 1),
               ],
             ),
           ],
@@ -191,7 +191,7 @@ class _UsersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      key: const PageStorageKey("users_list"),
+      key: const PageStorageKey('users_list'),
       itemCount: users.length,
       itemBuilder: (_, index) {
         final name = users[index];
@@ -204,7 +204,7 @@ class _UsersList extends StatelessWidget {
           ),
           title: Text(name, style: const TextStyle(fontSize: 16)),
           subtitle: Text(
-            index.isEven ? "Online" : "2 min ago",
+            index.isEven ? 'Online' : '2 min ago',
             style: TextStyle(
               fontSize: 12,
               color: index.isEven ? Colors.green : Colors.grey,

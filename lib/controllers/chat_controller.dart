@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../data/models/message_model.dart';
-import '../data/services/chat_api_service.dart';
+import 'package:chat_app/data/models/message_model.dart';
+import 'package:chat_app/data/services/chat_api_service.dart';
 
 class ChatController extends ChangeNotifier {
   final ChatApiService _apiService = ChatApiService();
@@ -12,7 +12,6 @@ class ChatController extends ChangeNotifier {
 
   late String _storageKey;
 
-  /// 👇 Must be called when opening a chat
   void initChat(String userName) {
     _storageKey = 'chat_messages_${_sanitizeKey(userName)}';
     loadMessages();

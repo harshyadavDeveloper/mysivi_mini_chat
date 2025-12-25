@@ -104,8 +104,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 final msg = chatController.messages[index];
 
                 return msg.isSender
-                    ? _SenderBubble(message: msg.text, time: "Now")
-                    : _ReceiverBubble(message: msg.text, time: "Now");
+                    ? _SenderBubble(message: msg.text, time: 'Now')
+                    : _ReceiverBubble(message: msg.text, time: 'Now');
               },
             ),
           ),
