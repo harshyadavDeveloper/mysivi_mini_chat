@@ -35,17 +35,17 @@ class ChatScreen extends StatelessWidget {
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'Alice Johnson',
-                  style: TextStyle(
+                  userName,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 2),
-                Text(
+                const SizedBox(height: 2),
+                const Text(
                   'Online',
                   style: TextStyle(fontSize: 12, color: Colors.green),
                 ),
@@ -73,13 +73,14 @@ class ChatScreen extends StatelessWidget {
           ),
 
           /// ---------- INPUT ----------
-          _MessageInput(),
+          const _MessageInput(),
         ],
       ),
     );
   }
 }
 
+/// ================= RECEIVER BUBBLE =================
 class _ReceiverBubble extends StatelessWidget {
   final String message;
   final String time;
@@ -127,6 +128,7 @@ class _ReceiverBubble extends StatelessWidget {
   }
 }
 
+/// ================= SENDER BUBBLE =================
 class _SenderBubble extends StatelessWidget {
   final String message;
   final String time;
@@ -178,9 +180,27 @@ class _SenderBubble extends StatelessWidget {
   }
 }
 
-class _MessageInput extends StatelessWidget {
+/// ================= MESSAGE INPUT =================
+class _MessageInput extends StatefulWidget {
+  const _MessageInput();
+
+  @override
+  State<_MessageInput> createState() => _MessageInputState();
+}
+
+class _MessageInputState extends State<_MessageInput> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final chatController = context.read<ChatController>();
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -188,6 +208,7 @@ class _MessageInput extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
+                controller: _controller,
                 decoration: InputDecoration(
                   hintText: 'Type a message',
                   filled: true,
@@ -209,7 +230,17 @@ class _MessageInput extends StatelessWidget {
               backgroundColor: Colors.blue,
               child: IconButton(
                 icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                onPressed: () {},
+                onPressed: () async {
+                  final text = _controller.text.trim();
+                  if (text.isEmpty) return;
+
+                  /// 1️⃣ Send local message
+                  chatController.sendLocalMessage(text);
+                  _controller.clear();
+
+                  /// 2️⃣ Fetch receiver message from API
+                  await chatController.fetchReceiverMessage();
+                },
               ),
             ),
           ],

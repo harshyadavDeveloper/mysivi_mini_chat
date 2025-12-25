@@ -1,7 +1,7 @@
 class AppUrls {
-  AppUrls._(); // prevents instantiation
+  AppUrls._(); // prevent instantiation
 
-  static const String _baseQuotableUrl = 'https://api.quotable.io';
+  static const String dummyJsonBase = 'https://dummyjson.com';
 
-  static const String randomQuote = '$_baseQuotableUrl/random';
+  static const String comments = '$dummyJsonBase/comments?limit=3';
 }
