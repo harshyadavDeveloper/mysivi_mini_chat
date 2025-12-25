@@ -1,3 +1,4 @@
+import 'package:chat_app/presentation/chat/chat_screen.dart';
 import 'package:chat_app/presentation/offers/offers_screen.dart';
 import 'package:chat_app/presentation/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -175,6 +176,12 @@ class _UsersList extends StatelessWidget {
               color: index.isEven ? Colors.green : Colors.grey,
             ),
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ChatScreen(userName: name)),
+            );
+          },
         );
       },
     );
