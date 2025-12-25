@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:chat_app/presentation/chat/chat_screen.dart';
 import 'package:chat_app/presentation/offers/offers_screen.dart';
 import 'package:chat_app/presentation/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,10 +13,25 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   int _selectedTopTab = 0;
   int _bottomIndex = 0;
+
+  final List<String> _users = [
+    'Alice Johnson',
+    'Bob Smith',
+    'Carol Williams',
+    'David Brown',
+    'Emma Davis',
+    'Frank Miller',
+    'Grace Wilson',
+    'Henry Moore',
+    'Harsh Patel',
+    'Isha Gupta',
+    'Jatin Shah',
+  ];
+
+  int _mockUserCount = 1;
 
   Widget _buildBody() {
     switch (_bottomIndex) {
@@ -35,7 +53,10 @@ class _HomeScreenState extends State<HomeScreen>
           Expanded(
             child: IndexedStack(
               index: _selectedTopTab,
-              children: const [_UsersList(), _ChatHistoryList()],
+              children: [
+                _UsersList(users: _users),
+                _ChatHistoryList(refreshTrigger: _selectedTopTab),
+              ],
             ),
           ),
         ],
@@ -48,13 +69,16 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: _buildBody(),
+
+      /// ---------- FAB ----------
       floatingActionButton: _bottomIndex == 0 && _selectedTopTab == 0
           ? FloatingActionButton(
               backgroundColor: Colors.blue,
-              onPressed: () {},
+              onPressed: _addUser,
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _bottomIndex,
         onTap: (index) {
@@ -76,6 +100,23 @@ class _HomeScreenState extends State<HomeScreen>
             label: 'Settings',
           ),
         ],
+      ),
+    );
+  }
+
+  /// ---------- ADD USER ----------
+  void _addUser() {
+    final newUser = 'New User $_mockUserCount';
+    _mockUserCount++;
+
+    setState(() {
+      _users.add(newUser);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('User added: $newUser'),
+        behavior: SnackBarBehavior.fixed,
       ),
     );
   }
@@ -113,8 +154,8 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             Row(
               children: [
-                _switcherItem("Users", 0),
-                _switcherItem("Chat History", 1),
+                _switcherItem('Users', 0),
+                _switcherItem('Chat History', 1),
               ],
             ),
           ],
@@ -141,27 +182,20 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
+/// ================= USERS LIST =================
 class _UsersList extends StatelessWidget {
-  const _UsersList();
+  final List<String> users;
+
+  const _UsersList({required this.users});
 
   @override
   Widget build(BuildContext context) {
-    final users = [
-      "Alice Johnson",
-      "Bob Smith",
-      "Carol Williams",
-      "David Brown",
-      "Emma Davis",
-      "Frank Miller",
-      "Grace Wilson",
-      "Henry Moore",
-    ];
-
     return ListView.builder(
-      key: const PageStorageKey("users_list"),
+      key: const PageStorageKey('users_list'),
       itemCount: users.length,
       itemBuilder: (_, index) {
         final name = users[index];
+
         return ListTile(
           leading: CircleAvatar(
             radius: 22,
@@ -170,7 +204,7 @@ class _UsersList extends StatelessWidget {
           ),
           title: Text(name, style: const TextStyle(fontSize: 16)),
           subtitle: Text(
-            index.isEven ? "Online" : "2 min ago",
+            index.isEven ? 'Online' : '2 min ago',
             style: TextStyle(
               fontSize: 12,
               color: index.isEven ? Colors.green : Colors.grey,
@@ -188,47 +222,129 @@ class _UsersList extends StatelessWidget {
   }
 }
 
-class _ChatHistoryList extends StatelessWidget {
-  const _ChatHistoryList();
+/// ================= CHAT HISTORY =================
+class _ChatHistoryList extends StatefulWidget {
+  final int refreshTrigger;
+
+  const _ChatHistoryList({required this.refreshTrigger});
+
+  @override
+  State<_ChatHistoryList> createState() => _ChatHistoryListState();
+}
+
+class _ChatHistoryListState extends State<_ChatHistoryList> {
+  final List<_ChatHistoryItem> _history = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChatHistory();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ChatHistoryList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    /// 👇 Reload when switching to Chat History tab
+    if (widget.refreshTrigger == 1 &&
+        oldWidget.refreshTrigger != widget.refreshTrigger) {
+      _loadChatHistory();
+    }
+  }
+
+  Future<void> _loadChatHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+
+    _history.clear();
+
+    for (final key in keys) {
+      if (!key.startsWith('chat_messages_')) continue;
+
+      final jsonString = prefs.getString(key);
+      if (jsonString == null) continue;
+
+      final List decoded = jsonDecode(jsonString);
+      if (decoded.isEmpty) continue;
+
+      final last = decoded.last;
+
+      final userName = key
+          .replaceFirst('chat_messages_', '')
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map(
+            (e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '',
+          )
+          .join(' ');
+
+      _history.add(
+        _ChatHistoryItem(
+          userName: userName,
+          lastMessage: last['text'],
+          time: DateTime.parse(last['time']),
+        ),
+      );
+    }
+
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    final chats = [
-      "See you tomorrow!",
-      "Thanks for the help",
-      "Let's catch up soon",
-      "Got it, thanks!",
-      "Perfect, see you then",
-      "That sounds great",
-      "I'll check it out",
-      "Talk later",
-    ];
+    if (_history.isEmpty) {
+      return const Center(
+        child: Text('No chats yet', style: TextStyle(color: Colors.grey)),
+      );
+    }
 
     return ListView.builder(
-      key: const PageStorageKey("chat_history_list"),
-      itemCount: chats.length,
+      key: const PageStorageKey('chat_history_list'),
+      itemCount: _history.length,
       itemBuilder: (_, index) {
+        final item = _history[index];
+
         return ListTile(
           leading: CircleAvatar(
             radius: 22,
             backgroundColor: Colors.green,
             child: Text(
-              String.fromCharCode(65 + index),
+              item.userName[0],
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          title: Text("User ${index + 1}"),
+          title: Text(item.userName),
           subtitle: Text(
-            chats[index],
+            item.lastMessage,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           trailing: Text(
-            index == 0 ? "2 min ago" : "Yesterday",
+            _formatTime(item.time),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         );
       },
     );
   }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    if (now.difference(time).inDays == 0) {
+      return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+    }
+    return '${time.day}/${time.month}/${time.year}';
+  }
+}
+
+class _ChatHistoryItem {
+  final String userName;
+  final String lastMessage;
+  final DateTime time;
+
+  _ChatHistoryItem({
+    required this.userName,
+    required this.lastMessage,
+    required this.time,
+  });
 }

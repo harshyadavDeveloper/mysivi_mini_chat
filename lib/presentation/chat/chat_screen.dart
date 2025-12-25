@@ -1,101 +1,154 @@
+import 'package:chat_app/controllers/chat_controller.dart';
+import 'package:chat_app/core/widgets/word_meaning_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   final String userName;
 
   const ChatScreen({super.key, required this.userName});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+  State<ChatScreen> createState() => _ChatScreenState();
+}
 
-      /// ---------- APP BAR ----------
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.blue,
-              child: Text(
-                userName[0],
-                style: const TextStyle(color: Colors.white),
-              ),
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
+  final ScrollController _scrollController = ScrollController();
+  late ChatController _chatController;
+
+  int _lastMessageCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _chatController.initChat(widget.userName);
+      _scrollToBottom();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _chatController = context.read<ChatController>();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// ✅ Keyboard open / close listener
+  @override
+  void didChangeMetrics() {
+    final bottomInset = WidgetsBinding.instance.window.viewInsets.bottom;
+
+    if (bottomInset > 0) {
+      // Keyboard opened
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollToBottom();
+      });
+    }
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ChatController>(
+      builder: (context, chatController, _) {
+        /// ✅ Scroll ONLY when message count changes
+        if (chatController.messages.length != _lastMessageCount) {
+          _lastMessageCount = chatController.messages.length;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToBottom();
+          });
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          resizeToAvoidBottomInset: true,
+
+          /// ---------- APP BAR ----------
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.white,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Alice Johnson',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+            title: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.blue,
+                  child: Text(
+                    widget.userName[0],
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
-                SizedBox(height: 2),
-                Text(
-                  'Online',
-                  style: TextStyle(fontSize: 12, color: Colors.green),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.userName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Online',
+                      style: TextStyle(fontSize: 12, color: Colors.green),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-
-      /// ---------- BODY ----------
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: const [
-                _ReceiverBubble(
-                  message: "Hey! How are you doing?",
-                  time: "10:30 AM",
-                ),
-                _SenderBubble(
-                  message: "I'm doing great, thanks! How about you?",
-                  time: "10:31 AM",
-                ),
-                _ReceiverBubble(
-                  message:
-                      "Pretty good! Just wanted to check in about the project.",
-                  time: "10:32 AM",
-                ),
-                _SenderBubble(
-                  message: "Oh yes, I've been making good progress on it.",
-                  time: "10:33 AM",
-                ),
-                _SenderBubble(
-                  message: "Should be ready by tomorrow.",
-                  time: "10:33 AM",
-                ),
-                _ReceiverBubble(
-                  message: "That's awesome! Let me know if you need any help.",
-                  time: "10:34 AM",
-                ),
-                _SenderBubble(message: "Will do, thanks!", time: "10:35 AM"),
               ],
             ),
           ),
 
-          /// ---------- INPUT ----------
-          _MessageInput(),
-        ],
-      ),
+          /// ---------- BODY ----------
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: chatController.messages.length,
+                  itemBuilder: (_, index) {
+                    final msg = chatController.messages[index];
+
+                    return msg.isSender
+                        ? _SenderBubble(message: msg.text, time: 'Now')
+                        : _ReceiverBubble(message: msg.text, time: 'Now');
+                  },
+                ),
+              ),
+              const _MessageInput(),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
+/// ================= RECEIVER BUBBLE =================
 class _ReceiverBubble extends StatelessWidget {
   final String message;
   final String time;
@@ -128,7 +181,19 @@ class _ReceiverBubble extends StatelessWidget {
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(message, style: const TextStyle(fontSize: 14)),
+                child: Wrap(
+                  children: message.split(' ').map((word) {
+                    return GestureDetector(
+                      onLongPress: () {
+                        showWordMeaningSheet(context, word);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(word, style: const TextStyle(fontSize: 14)),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -143,6 +208,7 @@ class _ReceiverBubble extends StatelessWidget {
   }
 }
 
+/// ================= SENDER BUBBLE =================
 class _SenderBubble extends StatelessWidget {
   final String message;
   final String time;
@@ -167,9 +233,18 @@ class _SenderBubble extends StatelessWidget {
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(
-                  message,
-                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                child: Wrap(
+                  children: message.split(' ').map((word) {
+                    return GestureDetector(
+                      onLongPress: () {
+                        showWordMeaningSheet(context, word);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(word, style: const TextStyle(fontSize: 14)),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
               const SizedBox(height: 4),
@@ -194,9 +269,27 @@ class _SenderBubble extends StatelessWidget {
   }
 }
 
-class _MessageInput extends StatelessWidget {
+/// ================= MESSAGE INPUT =================
+class _MessageInput extends StatefulWidget {
+  const _MessageInput();
+
+  @override
+  State<_MessageInput> createState() => _MessageInputState();
+}
+
+class _MessageInputState extends State<_MessageInput> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final chatController = context.read<ChatController>();
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -204,6 +297,7 @@ class _MessageInput extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
+                controller: _controller,
                 decoration: InputDecoration(
                   hintText: 'Type a message',
                   filled: true,
@@ -225,7 +319,17 @@ class _MessageInput extends StatelessWidget {
               backgroundColor: Colors.blue,
               child: IconButton(
                 icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                onPressed: () {},
+                onPressed: () async {
+                  final text = _controller.text.trim();
+                  if (text.isEmpty) return;
+
+                  /// 1️⃣ Send local message
+                  chatController.sendLocalMessage(text);
+                  _controller.clear();
+
+                  /// 2️⃣ Fetch receiver message from API
+                  await chatController.fetchReceiverMessage();
+                },
               ),
             ),
           ],
