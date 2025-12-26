@@ -12,10 +12,11 @@ class ChatController extends ChangeNotifier {
 
   late String _storageKey;
 
-  void initChat(String userName) {
-    _storageKey = 'chat_messages_${_sanitizeKey(userName)}';
-    loadMessages();
-  }
+  Future<void> initChat(String userName) async {
+  _storageKey = 'chat_messages_${_sanitizeKey(userName)}';
+  await loadMessages();
+}
+
 
   /// ---------- LOAD ----------
   Future<void> loadMessages() async {
