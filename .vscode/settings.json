@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/flutter/projects/chat_app/linux"
+  "cmake.sourceDirectory": "C:/flutter/projects/chat_app/linux",
+  "dart.flutterSdkPath": ".fvm/versions/3.38.3"
 }
