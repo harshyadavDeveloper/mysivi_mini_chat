@@ -6,7 +6,10 @@ import 'package:chat_app/data/models/message_model.dart';
 import 'package:chat_app/data/services/chat_api_service.dart';
 
 class ChatController extends ChangeNotifier {
-  final ChatApiService _apiService = ChatApiService();
+    final ChatApiService _apiService;
+
+  ChatController({ChatApiService? apiService})
+      : _apiService = apiService ?? ChatApiService();
 
   final List<MessageModel> messages = [];
 
