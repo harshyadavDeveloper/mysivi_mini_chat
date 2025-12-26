@@ -2,9 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class DictionaryApiService {
+  final http.Client client;
+
+  DictionaryApiService({required this.client});
+
   Future<String> fetchMeaning(String word) async {
     try {
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$word'),
       );
 

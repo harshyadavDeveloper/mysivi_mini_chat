@@ -1,21 +1,26 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chat_app/data/models/message_model.dart';
 import 'package:chat_app/data/services/chat_api_service.dart';
 
 class ChatController extends ChangeNotifier {
-  final ChatApiService _apiService = ChatApiService();
+    final ChatApiService _apiService;
+
+  ChatController({ChatApiService? apiService})
+      : _apiService = apiService ?? ChatApiService(client: Client());
 
   final List<MessageModel> messages = [];
 
   late String _storageKey;
 
-  void initChat(String userName) {
-    _storageKey = 'chat_messages_${_sanitizeKey(userName)}';
-    loadMessages();
-  }
+  Future<void> initChat(String userName) async {
+  _storageKey = 'chat_messages_${_sanitizeKey(userName)}';
+  await loadMessages();
+}
+
 
   /// ---------- LOAD ----------
   Future<void> loadMessages() async {
