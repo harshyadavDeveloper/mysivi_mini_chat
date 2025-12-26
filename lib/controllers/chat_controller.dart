@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chat_app/data/models/message_model.dart';
@@ -9,7 +10,7 @@ class ChatController extends ChangeNotifier {
     final ChatApiService _apiService;
 
   ChatController({ChatApiService? apiService})
-      : _apiService = apiService ?? ChatApiService();
+      : _apiService = apiService ?? ChatApiService(client: Client());
 
   final List<MessageModel> messages = [];
 

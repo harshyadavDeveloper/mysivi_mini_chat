@@ -42,7 +42,7 @@ void main() {
         MessageModel(
           text: 'Hello',
           isSender: true,
-          time: DateTime(2024, 1, 1),
+          time: DateTime(2024),
         ).toJson(),
         MessageModel(
           text: 'Hi there',

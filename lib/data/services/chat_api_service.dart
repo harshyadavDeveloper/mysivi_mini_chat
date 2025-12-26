@@ -3,7 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:chat_app/core/constants/app_urls.dart';
 
 class ChatApiService {
+  final http.Client client;
   int _currentIndex = 0;
+
+  ChatApiService({required this.client});
 
   Future<String> fetchReceiverMessage() async {
     try {
