@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:chat_app/data/services/dictionary_api_service.dart';
+import 'package:http/http.dart';
 
 void showWordMeaningSheet(BuildContext context, String word) {
-  final api = DictionaryApiService();
+  final api = DictionaryApiService(client: Client());
 
   showModalBottomSheet(
     context: context,
